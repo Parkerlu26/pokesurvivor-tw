@@ -28,7 +28,29 @@ G.ModUI = (() => {
       render();
     };
     $('gift-send').onclick = sendGift;
+    $('dex-unlock').onclick = () => unlockDex(false);
+    $('dex-unlock-shiny').onclick = () => unlockDex(true);
     document.querySelectorAll('#mod-tabs .tab').forEach(t => { t.onclick = () => { tab = t.dataset.tab; render(); }; });
+  }
+
+  /** 管理員：把自己存檔的圖鑑全部解鎖（只影響自己的帳號）。 */
+  function unlockDex(withShiny) {
+    if (!G.Ranking.isAdmin()) return;
+    const s = G.DB.save;
+    if (!s) return;
+    if (!confirm(withShiny ? '確定要解鎖全部一般＋閃光寶可夢嗎？' : '確定要解鎖全部一般寶可夢嗎？')) return;
+    const msg = $('dex-msg');
+    const now = Date.now();
+    let n = 0, sh = 0;
+    s.owned = s.owned || {};
+    s.shiny = s.shiny || {};
+    for (const p of G.DEX) {
+      if (!s.owned[p.dex]) { s.owned[p.dex] = { at: now, from: 'admin' }; n++; }
+      if (withShiny && !s.shiny[p.dex]) { s.shiny[p.dex] = { at: now, from: 'admin' }; sh++; }
+    }
+    G.DB.commit(true);
+    msg.textContent = '已解鎖 ' + n + ' 隻一般寶可夢' + (withShiny ? '、' + sh + ' 隻閃光' : '') + '。';
+    if (G.UI) G.UI.toast('圖鑑已更新', 3000);
   }
 
   /** 管理員：把金幣／抽獎券放進玩家的禮物箱。 */
@@ -64,11 +86,13 @@ G.ModUI = (() => {
 
   async function render() {
     document.querySelectorAll('#mod-tabs .tab').forEach(t => t.classList.toggle('on', t.dataset.tab === tab));
-    const gift = tab === 'gift';
-    $('mod-list').classList.toggle('hidden', gift);
+    const gift = tab === 'gift', tools = tab === 'tools';
+    $('mod-list').classList.toggle('hidden', gift || tools);
     $('mod-gift').classList.toggle('hidden', !gift);
-    $('mod-purge').classList.toggle('hidden', gift);
+    $('mod-tools').classList.toggle('hidden', !tools);
+    $('mod-purge').classList.toggle('hidden', gift || tools);
     if (gift) { $('gift-msg').textContent = ''; return; }
+    if (tools) { $('dex-msg').textContent = ''; return; }
     const list = $('mod-list');
     list.innerHTML = '<p class="sub">Cargando…</p>';
     try {

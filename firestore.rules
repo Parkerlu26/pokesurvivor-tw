@@ -234,6 +234,26 @@ service cloud.firestore {
       allow read: if signedIn();
     }
 
+    // ---------- 管理員發放 ----------
+    // 管理員寫入 gifts/{uid}/items/{gid}；玩家只能讀自己的、只能標記為已領取。
+    match /gifts/{uid}/items/{gid} {
+      allow read: if signedIn() && (me() == uid || admin());
+      allow create: if admin()
+        && request.resource.data.keys().hasOnly(['c', 't1', 't10', 'from', 'at', 'claimed', 'note'])
+        && request.resource.data.from == me()
+        && request.resource.data.c is int && request.resource.data.c >= 0 && request.resource.data.c <= 1000000
+        && request.resource.data.t1 is int && request.resource.data.t1 >= 0 && request.resource.data.t1 <= 10000
+        && request.resource.data.t10 is int && request.resource.data.t10 >= 0 && request.resource.data.t10 <= 10000
+        && request.resource.data.claimed == false
+        && request.resource.data.at == request.time
+        && (!('note' in request.resource.data) || (request.resource.data.note is string && request.resource.data.note.size() <= 40));
+      allow update: if signedIn() && me() == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['claimed', 'claimedAt'])
+        && request.resource.data.claimed == true
+        && request.resource.data.claimedAt == request.time;
+      allow delete: if admin();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

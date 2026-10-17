@@ -400,8 +400,23 @@
     <div class="tabs" id="mod-tabs">
       <div class="tab on" data-tab="rep">Reportes</div>
       <div class="tab" data-tab="sus">Baneados</div>
+      <div class="tab" data-tab="gift">發放</div>
     </div>
     <div id="mod-list" class="rk-list" style="max-height:60vh"></div>
+    <div id="mod-gift" class="hidden">
+      <p class="sub">發放金幣或抽獎券給玩家。輸入對方的遊戲暱稱即可，不用 UID；對方下次登入或回到選單時會自動領取。</p>
+      <div class="row wrap" style="gap:8px;align-items:flex-end">
+        <label class="sub">玩家暱稱<br><input id="gift-name" type="text" maxlength="16" placeholder="例如：小明" style="width:180px"></label>
+        <label class="sub">金幣<br><input id="gift-coins" type="number" min="0" step="1" value="0" style="width:110px"></label>
+        <label class="sub">×1 抽獎券<br><input id="gift-t1" type="number" min="0" step="1" value="0" style="width:90px"></label>
+        <label class="sub">×10 抽獎券<br><input id="gift-t10" type="number" min="0" step="1" value="0" style="width:90px"></label>
+      </div>
+      <div class="row wrap" style="gap:8px;margin-top:8px;align-items:flex-end">
+        <label class="sub grow">備註（可留空）<br><input id="gift-note" type="text" maxlength="40" placeholder="例如：活動獎勵" style="width:100%"></label>
+        <button id="gift-send" class="btn gold">發放</button>
+      </div>
+      <p id="gift-msg" class="sub" style="margin-top:8px"></p>
+    </div>
   </div>
 </section>
 
@@ -555,7 +570,7 @@
 <!-- datos generados -->
 <script>try{localStorage.setItem('ps.lang','es')}catch(e){}</script>
 <script src="js/firebase-config.runtime.js"></script>
-<script defer src="js/app.min.js?v=5d8985f39b"></script>
+<script defer src="js/app.min.js?v=97397187e3"></script>
 <script defer src="js/zh-hant.js"></script>
 </body>
 </html>

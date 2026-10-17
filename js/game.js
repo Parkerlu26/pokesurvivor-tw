@@ -888,6 +888,7 @@ G.Flow = {
     document.getElementById('user-pill').onclick = () => G.GoalsUI.open('profile');
     G.Audio.music('village');     // suena tras el primer clic (lo exige el navegador)
     G.Game.init();
+    if (G.Gifts) G.Gifts.start();
     // La base de datos (nube o local) recupera la sesión anterior.
     G.DB.ready().then(restored => {
       document.getElementById('boot').classList.add('hidden');
@@ -919,6 +920,7 @@ G.Flow = {
   toLogin() { G.Audio.music('village'); G.LoginUI.open(); },
   afterLogin() {
     G.Audio.music('village');
+    if (G.Gifts) G.Gifts.claim();
     if (!G.DB.save.partner) G.TestUI.start();
     else this.goMenu();
   },

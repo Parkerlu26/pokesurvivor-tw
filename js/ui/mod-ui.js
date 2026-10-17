@@ -27,7 +27,30 @@ G.ModUI = (() => {
       b.disabled = false; b.textContent = 'Quitar marcas de más de 1 hora';
       render();
     };
+    $('gift-send').onclick = sendGift;
     document.querySelectorAll('#mod-tabs .tab').forEach(t => { t.onclick = () => { tab = t.dataset.tab; render(); }; });
+  }
+
+  /** 管理員：把金幣／抽獎券放進玩家的禮物箱。 */
+  async function sendGift() {
+    const msg = $('gift-msg'), b = $('gift-send');
+    const name = $('gift-name').value.trim();
+    const c = Math.max(0, Math.floor(+$('gift-coins').value || 0));
+    const t1 = Math.max(0, Math.floor(+$('gift-t1').value || 0));
+    const t10 = Math.max(0, Math.floor(+$('gift-t10').value || 0));
+    if (!name) { msg.textContent = '請先輸入玩家暱稱。'; return; }
+    if (!c && !t1 && !t10) { msg.textContent = '至少填一項數量大於 0。'; return; }
+    b.disabled = true; msg.textContent = '查詢玩家…';
+    try {
+      const uid = await G.Gifts.uidOfName(name);
+      if (!uid) { msg.textContent = '找不到「' + name + '」，暱稱要和遊戲裡完全一樣。'; return; }
+      const cur = await G.Gifts.balanceOf(uid).catch(() => null);
+      await G.Gifts.send(uid, { c, t1, t10, note: $('gift-note').value.trim() });
+      msg.textContent = '已發放給 ' + name + (cur ? '（目前 ' + cur.c + ' 金幣、' + cur.t1 + ' 張 ×1、' + cur.t10 + ' 張 ×10）' : '') + '。對方下次登入或回選單時會自動領取。';
+      $('gift-coins').value = 0; $('gift-t1').value = 0; $('gift-t10').value = 0; $('gift-note').value = '';
+    } catch (e) {
+      msg.textContent = '發放失敗：' + (e.code || e.message || e);
+    } finally { b.disabled = false; }
   }
 
   function open() {
@@ -41,6 +64,11 @@ G.ModUI = (() => {
 
   async function render() {
     document.querySelectorAll('#mod-tabs .tab').forEach(t => t.classList.toggle('on', t.dataset.tab === tab));
+    const gift = tab === 'gift';
+    $('mod-list').classList.toggle('hidden', gift);
+    $('mod-gift').classList.toggle('hidden', !gift);
+    $('mod-purge').classList.toggle('hidden', gift);
+    if (gift) { $('gift-msg').textContent = ''; return; }
     const list = $('mod-list');
     list.innerHTML = '<p class="sub">Cargando…</p>';
     try {

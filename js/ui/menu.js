@@ -232,6 +232,24 @@ G.MenuUI = (() => {
 
   let upgDex = null;
 
+  /** 某項強化從 0 升到 lvl 總共花了多少金幣。 */
+  function spentOn(id, lvl) {
+    let t = 0;
+    for (let k = 0; k < lvl; k++) t += G.Upgrades.cost(id, k);
+    return t;
+  }
+  /** 這隻寶可夢所有強化總共花了多少。 */
+  function spentAll(levels) {
+    let t = 0;
+    for (const u of G.Upgrades.LIST) t += spentOn(u.id, levels[u.id] || 0);
+    return t;
+  }
+  /** 退款後把超額的封鎖招式名單裁掉。 */
+  function trimBans(max) {
+    const l = banList();
+    if (l.length > max) l.length = max;
+  }
+
   function openUpgrades() {
     G.UI.show('scr-upgrades', true);
     const s = G.DB.save;
@@ -256,6 +274,35 @@ G.MenuUI = (() => {
     $('upg-stage').style.setProperty('--stage-c', shiny ? '#9ae6ff' : G.U.TYPE_COLOR[mon.types[0]]);
     const box = $('upg-list');
     box.innerHTML = '';
+
+    // 一鍵重置：退還這隻寶可夢已花費金幣的 70%。
+    const spent = spentAll(levels);
+    const back = Math.floor(spent * 0.7);
+    if (spent > 0) {
+      const rz = document.createElement('div');
+      rz.className = 'panel upg-item';
+      rz.innerHTML = `
+        <div class="ic">${G.Icons.html('up', 32)}</div>
+        <div>
+          <b>一鍵重置</b> <span style="color:var(--muted);font-size:13px">退還已花費金幣的 70%</span>
+          <div class="sub">已花 ${spent} 金幣 · 可退回 ${back} 金幣</div>
+        </div>
+        <div class="upg-btns"><button class="btn small danger" data-reset>重置並退回 ${back}</button></div>`;
+      rz.querySelector('[data-reset]').onclick = () => {
+        if (!confirm(`重置 ${mon.name} 的所有強化，取回 ${back} 金幣（已花費的 70%）？`)) return;
+        const sv = G.DB.save, lv = G.DB.upgradesOf(upgDex);
+        for (const u of G.Upgrades.LIST) delete lv[u.id];
+        trimBans(0);
+        sv.coins += back;
+        G.DB.commit(true);
+        G.UI.refreshCoins();
+        G.Audio.sfx('buy');
+        G.UI.toast(`已重置 ${mon.name} 的強化，取回 ${back} 金幣`);
+        renderUpgrades();
+      };
+      box.appendChild(rz);
+    }
+
     for (const u of G.Upgrades.LIST) {
       const lvl = levels[u.id] || 0;
       const maxed = lvl >= u.max;
@@ -270,9 +317,25 @@ G.MenuUI = (() => {
         </div>
         <div class="upg-btns">
           ${u.id === 'ban' && lvl > 0 ? `<button class="btn small" data-ban>Elegir (${banList().length}/${lvl})</button>` : ''}
+          ${lvl > 0 ? `<button class="btn small ghost" data-sell data-sfx="none">退 1 級（70%）· <span class="coin"></span> ${Math.floor(G.Upgrades.cost(u.id, lvl - 1) * 0.7)}</button>` : ''}
           <button class="btn small ${maxed ? '' : 'gold'}" data-buy data-sfx="none" ${maxed || s.coins < cost ? 'disabled' : ''}>
           ${maxed ? 'Máx.' : `<span class="coin"></span> ${cost}`}</button></div>`;
       if (u.id === 'ban' && lvl > 0) el.querySelector('[data-ban]').onclick = () => { banOpen = !banOpen; renderUpgrades(); };
+      const sell = el.querySelector('[data-sell]');
+      if (sell) sell.onclick = () => {
+        const sv = G.DB.save, lv2 = G.DB.upgradesOf(upgDex), now = lv2[u.id] || 0;
+        if (now <= 0) return;
+        const refund = Math.floor(G.Upgrades.cost(u.id, now - 1) * 0.7);
+        if (!confirm(`退掉 ${mon.name} 的「${u.name}」1 級，取回 ${refund} 金幣（該級花費的 70%）？`)) return;
+        sv.coins += refund;
+        if (now - 1 > 0) lv2[u.id] = now - 1; else delete lv2[u.id];
+        if (u.id === 'ban') trimBans(now - 1);
+        G.DB.commit(true);
+        G.UI.refreshCoins();
+        G.Audio.sfx('buy');
+        G.UI.toast(`已退回 ${refund} 金幣`);
+        renderUpgrades();
+      };
       el.querySelector('[data-buy]').onclick = () => {
         // Se vuelve a leer todo al pulsar (la partida puede haber cambiado desde que se dibujó).
         const sv = G.DB.save, lv = G.DB.upgradesOf(upgDex), now = lv[u.id] || 0;

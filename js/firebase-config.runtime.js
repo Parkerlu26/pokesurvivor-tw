@@ -3,8 +3,15 @@
  * 留 null 就是只用瀏覽器本機存檔（單人可玩，不能合作、不能排行榜）。
  * 這個檔案不會被 build 打包，改完重新整理即可，不必重建置。
  */
-window.PS_FIREBASE_CONFIG = null;
-
+window.PS_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAHotyIe5NF9VAg2m4MCRdVYugOkFCtazw",
+  authDomain: "pokesurvivor-tw-6b55e.firebaseapp.com",
+  databaseURL: "https://pokesurvivor-tw-6b55e-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "pokesurvivor-tw-6b55e",
+  storageBucket: "pokesurvivor-tw-6b55e.firebasestorage.app",
+  messagingSenderId: "66227122336",
+  appId: "1:66227122336:web:f27c738728da53515959c5",
+  };
 /* 範例：
 window.PS_FIREBASE_CONFIG = {
   apiKey: 'AIza...',

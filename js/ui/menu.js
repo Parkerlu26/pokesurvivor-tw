@@ -280,14 +280,16 @@ G.MenuUI = (() => {
     const back = Math.floor(spent * 0.7);
     if (spent > 0) {
       const rz = document.createElement('div');
-      rz.className = 'panel upg-item';
+      rz.className = 'panel';
+      rz.style.gridColumn = '1 / -1';
       rz.innerHTML = `
-        <div class="ic">${G.Icons.html('up', 32)}</div>
-        <div>
-          <b>一鍵重置</b> <span style="color:var(--muted);font-size:13px">退還已花費金幣的 70%</span>
-          <div class="sub">已花 ${spent} 金幣 · 可退回 ${back} 金幣</div>
-        </div>
-        <div class="upg-btns"><button class="btn small danger" data-reset>重置並退回 ${back}</button></div>`;
+        <div class="row wrap between" style="gap:10px;align-items:center">
+          <div>
+            <b>一鍵重置</b> <span style="color:var(--muted);font-size:13px">退還已花費金幣的 70%</span>
+            <div class="sub">已花 ${spent} 金幣 · 可退回 ${back} 金幣</div>
+          </div>
+          <button class="btn small danger" data-reset>重置並退回 ${back}</button>
+        </div>`;
       rz.querySelector('[data-reset]').onclick = () => {
         if (!confirm(`重置 ${mon.name} 的所有強化，取回 ${back} 金幣（已花費的 70%）？`)) return;
         const sv = G.DB.save, lv = G.DB.upgradesOf(upgDex);
@@ -317,7 +319,7 @@ G.MenuUI = (() => {
         </div>
         <div class="upg-btns">
           ${u.id === 'ban' && lvl > 0 ? `<button class="btn small" data-ban>Elegir (${banList().length}/${lvl})</button>` : ''}
-          ${lvl > 0 ? `<button class="btn small ghost" data-sell data-sfx="none">退 1 級（70%）· <span class="coin"></span> ${Math.floor(G.Upgrades.cost(u.id, lvl - 1) * 0.7)}</button>` : ''}
+          ${lvl > 0 ? `<button class="btn small ghost" data-sell data-sfx="none" title="退回該級花費的 70%" style="white-space:nowrap">退 1 級 · <span class="coin"></span> ${Math.floor(G.Upgrades.cost(u.id, lvl - 1) * 0.7)}</button>` : ''}
           <button class="btn small ${maxed ? '' : 'gold'}" data-buy data-sfx="none" ${maxed || s.coins < cost ? 'disabled' : ''}>
           ${maxed ? 'Máx.' : `<span class="coin"></span> ${cost}`}</button></div>`;
       if (u.id === 'ban' && lvl > 0) el.querySelector('[data-ban]').onclick = () => { banOpen = !banOpen; renderUpgrades(); };

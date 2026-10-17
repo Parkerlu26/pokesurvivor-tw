@@ -290,6 +290,11 @@ label { display: block; font-size: 14px; color: var(--muted); margin: 8px 0 4px;
 /* ---------- mejoras ---------- */
 .upg { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
 .upg-item { display: grid; grid-template-columns: 40px 1fr auto; gap: 10px; align-items: center; }
+/* 強化：手機上把「退 1 級／購買」按鈕移到下一列，避免被擠出畫面 */
+@media (max-width: 520px) {
+  .upg-item { grid-template-columns: 40px 1fr; }
+  .upg-item .upg-btns { grid-column: 1 / -1; justify-content: flex-start; }
+}
 .upg-item .ic { font-size: 26px; text-align: center; }
 .pips { display: flex; gap: 3px; margin-top: 4px; }
 .pips i { width: 12px; height: 6px; border-radius: 2px; background: rgba(0,0,0,.4); }

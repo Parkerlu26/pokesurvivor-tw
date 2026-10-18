@@ -28,9 +28,32 @@ G.ModUI = (() => {
       render();
     };
     $('gift-send').onclick = sendGift;
+    const sel = $('dex-one');
+    if (sel && !sel.options.length && G.DEX) {
+      sel.innerHTML = G.DEX.map(p => `<option value="${p.dex}">#${String(p.dex).padStart(4, '0')} · ${esc(p.name)}</option>`).join('');
+    }
     $('dex-unlock').onclick = () => unlockDex(false);
     $('dex-unlock-shiny').onclick = () => unlockDex(true);
+    $('dex-shiny-one').onclick = () => grantOneShiny();
     document.querySelectorAll('#mod-tabs .tab').forEach(t => { t.onclick = () => { tab = t.dataset.tab; render(); }; });
+  }
+
+  /** 管理員：只給指定的那一隻閃光（同時也給一般版）。 */
+  function grantOneShiny() {
+    if (!G.Ranking.isAdmin()) return;
+    const s = G.DB.save;
+    if (!s) return;
+    const dex = +($('dex-one') || {}).value;
+    const mon = G.DEX_BY[dex];
+    if (!mon) return;
+    s.shiny = s.shiny || {};
+    const had = !!s.shiny[dex];
+    G.DB.grantShiny(dex, 'admin');
+    G.DB.commit(true);
+    $('dex-msg').textContent = had
+      ? `${mon.name} 早就已經是閃光了。`
+      : `已獲得 ${mon.name} 的閃光（一般版也一併給）。`;
+    if (G.UI) G.UI.toast('閃光已加入圖鑑', 3000);
   }
 
   /** 管理員：把自己存檔的圖鑑全部解鎖（只影響自己的帳號）。 */

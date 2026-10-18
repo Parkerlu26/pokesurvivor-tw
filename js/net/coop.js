@@ -191,6 +191,9 @@ G.Coop = (() => {
     // Siempre: quién está eligiendo y, si hay cartas de nivel, cuáles (ver arriba).
     f.ho = holdNames();
     if (waiting.size) f.lu = [levelSeq, levelNow];
+    // 裂縫狀態每幀都帶：隊友漏掉一次性 'rift' 廣播也會自己補回來。
+    const rf = G.Rift && G.Rift.rift;
+    f.rf = rf ? [Math.round(rf.x), Math.round(rf.y), Math.ceil(rf.ttl)] : null;
     return f;
   }
 
@@ -324,6 +327,8 @@ G.Coop = (() => {
       if (msg.lu && msg.lu[0] > seenSeq) { seenSeq = msg.lu[0]; api.levelStart(msg.lu[1]); }
       else if (!msg.lu && api.inLevelUp && api.inLevelUp()) api.resume();
     }
+    // 裂縫：以主機的狀態為準（'rf' 不存在 = 舊版主機，不要動）。
+    if ('rf' in msg && G.Rift) G.Rift.sync(msg.rf);
     api.syncTeam({ time: msg.t, level: msg.lv, xp: msg.xp, xpNext: msg.xn, kills: msg.ki, bosses: msg.bo, coins: msg.co,
                    t1: (msg.tk || [])[0], t10: (msg.tk || [])[1] });
     for (const u in msg.p || {}) {

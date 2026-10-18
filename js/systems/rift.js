@@ -26,11 +26,11 @@ G.Rift = (() => {
   const ARENA_R = 11, ARENA_TIME = 120, FROM = 75;
   let rift = null;          // { x, y, ttl, t }
   let arena = null;         // { tx, ty, r, dex, shiny, x, y, back, biome, t, phase, endT, bossId }
-  let checkT = CHECK, asked = false, downT = 0, misses = 0;
+  let checkT = CHECK, asked = false, askT = 0, downT = 0, misses = 0;
   const authority = () => !G.Coop.active || G.Coop.isHost;
   const TS = () => G.Tiles.T * G.Sprites.PX;
 
-  function reset() { rift = null; arena = null; checkT = CHECK; asked = false; downT = 0; misses = 0; }
+  function reset() { rift = null; arena = null; checkT = CHECK; asked = false; askT = 0; downT = 0; misses = 0; }
 
   // ---------------- grieta en el mapa ----------------
 
@@ -39,14 +39,23 @@ G.Rift = (() => {
       rift.t += dt;
       rift.ttl -= dt;
       if (rift.ttl <= 0) { rift = null; return; }
-      if (!arena && !pl.dead && G.U.dist2(pl.x, pl.y, rift.x, rift.y - 10) < 30 * 30) enter();
+      if (!arena && !pl.dead && G.U.dist2(pl.x, pl.y, rift.x, rift.y - 10) < 30 * 30) {
+        if (!asked) enter();
+        else if (!authority()) {
+          // 隊友：'re' 可能剛好丟掉；站在裂縫上時每秒重送，直到主機開場。
+          askT -= dt;
+          if (askT <= 0) { askT = 1; G.Coop.toHost(['re']); }
+        }
+      }
     } else if (!arena && authority() && time > FROM && time < G.Judgment.AT - 120) {
       checkT -= dt;
       if (checkT <= 0) {
         checkT = CHECK;
         if (G.EnemyMgr.bossAlive()) return;           // con un jefe vivo no cuenta como intento
-        if (Math.random() < CHANCE * (1 + misses)) { misses = 0; open(); }
-        else misses++;
+        if (Math.random() < CHANCE * (1 + misses)) {
+          // 只有真的生出裂縫才算成功；找不到空地時保留保底次數，5 秒後再試。
+          if (open()) misses = 0; else { misses++; checkT = 5; }
+        } else misses++;
       }
     }
     if (arena) arenaTick(dt, pl);
@@ -55,20 +64,22 @@ G.Rift = (() => {
   function open() {
     const alive = G.Game.everyone().filter(p => !p.dead);
     const near = G.U.pick(alive.length ? alive : [G.Game.player]);
-    for (let i = 0; i < 24; i++) {
-      const a = Math.random() * 6.2832, d = G.U.rand(380, 560);
+    for (let i = 0; i < 48; i++) {
+      const wide = i >= 24;                 // 第二輪：更遠、更小的安全半徑
+      const a = Math.random() * 6.2832, d = wide ? G.U.rand(300, 720) : G.U.rand(380, 560);
       const x = near.x + Math.cos(a) * d, y = near.y + Math.sin(a) * d * 0.85;
-      if (!G.World.isFree(x, y, 22)) continue;
+      if (!G.World.isFree(x, y, wide ? 16 : 22)) continue;
       show(x, y, TTL);
       if (G.Coop.isHost) G.Coop.broadcast(['rift', Math.round(x), Math.round(y), TTL]);
-      return;
+      return true;
     }
+    return false;
   }
 
   /** Aparece la grieta (también la que manda el anfitrión). */
   function show(x, y, ttl) {
     rift = { x, y, ttl, t: 0 };
-    asked = false;
+    asked = false; askT = 0;
     // (El aviso grande lo dibuja hud.js mientras rift.t < 4,5 s.)
     G.Audio.sfx('rift');
     G.FX.ring(x, y, 6, 80, '#b48aff', 0.7, 5);
@@ -258,6 +269,14 @@ G.Rift = (() => {
 
   // ---------------- red ----------------
 
+  /** 隊友：用主機每幀帶的裂縫狀態自我修正（rf = [x,y,ttl] 或 null）。 */
+  function sync(rf) {
+    if (arena) return;
+    if (!rf) { if (rift) rift = null; return; }
+    if (!rift) { show(rf[0], rf[1], rf[2]); return; }
+    rift.x = rf[0]; rift.y = rf[1]; rift.ttl = rf[2];
+  }
+
   function onEvent(ev) {
     switch (ev[0]) {
       case 'rift': show(ev[1], ev[2], ev[3]); break;
@@ -269,7 +288,7 @@ G.Rift = (() => {
   }
 
   return {
-    reset, update, drawable, onEvent, enterRequest() { if (!arena) start(); },
+    reset, update, drawable, onEvent, sync, enterRequest() { if (!arena) start(); },
     get rift() { return rift; }, get arena() { return arena; },
     get inArena() { return !!arena; },
     get timeLeft() { return arena ? Math.max(0, ARENA_TIME - arena.t) : 0; },

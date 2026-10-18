@@ -51,8 +51,13 @@ G.Coop = (() => {
 
   // ---------------- escalado de dificultad ----------------
 
-  const scaleRate = n => 1 + 0.75 * Math.max(0, n - 1);
-  const scaleHp = n => 1 + 0.3 * Math.max(0, n - 1);
+  // 多人平衡（2026-10-18）：血量 +22%/人、出生率 +60%/人、團隊經驗除數 1+0.35(n-1)。
+  // 之前是 +30%／+75%／0.6，四人團的總血量流量是單人的 6.18 倍，但經驗只有 35.7%。
+  // 現在四人團約 4.65 倍，仍然比單人硬，但不會變成子彈海綿。
+  const scaleRate = n => 1 + 0.6 * Math.max(0, n - 1);
+  const scaleHp = n => 1 + 0.22 * Math.max(0, n - 1);
+  // Boss／裂縫傳說：只要組隊就額外 ×1.3（之前 ×1.4）。
+  const bossScale = n => scaleHp(n) * (n > 1 ? 1.3 : 1);
 
   // ---------------- arranque / fin ----------------
 
@@ -121,7 +126,7 @@ G.Coop = (() => {
   function xpFactor() {
     let s = local.xpMul, n = 1;
     for (const m of mates.values()) if (m.connected) { s += m.xpMul || 1; n++; }
-    return (s / n) / local.xpMul / (1 + 0.6 * (n - 1));
+    return (s / n) / local.xpMul / (1 + 0.35 * (n - 1));
   }
 
   // ---------------- estado de un jugador ----------------
@@ -491,7 +496,7 @@ G.Coop = (() => {
   }
 
   return {
-    ANIMS, COLORS, begin, end, leave, tick, players, puppets, xpFactor, scaleRate, scaleHp,
+    ANIMS, COLORS, begin, end, leave, tick, players, puppets, xpFactor, scaleRate, scaleHp, bossScale,
     cast, hit, status, hurtShown, enemyAdded, enemyGone, enemyShot, pickupAdded, pickupGone, say,
     propBroken, collected, shinyCaught, levelStart, localPicked, over, holdStart, holdEnd,
     /** Anfitrión: evento para todos. Invitado: evento para el anfitrión. */

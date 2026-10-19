@@ -20,7 +20,8 @@ G.NewsUI = (() => {
 
   function fmt(d) {
     const [y, m, day] = d.split('-').map(Number);
-    return new Date(y, m - 1, day).toLocaleDateString(G.I18n.lang === 'en' ? 'en-GB' : 'es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+    // 繁中私人副本：日期直接寫成「2026 年 10 月 18 日」，避免西文格式。
+    return `${y} 年 ${m} 月 ${day} 日`;
   }
 
   function open() {

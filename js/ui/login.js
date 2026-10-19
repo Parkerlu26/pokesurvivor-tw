@@ -71,17 +71,17 @@ G.LoginUI = (() => {
   const cloud = () => G.DB.mode === 'cloud' && !G.DB.guest;
   const NOTES = [
     { key: 'ps.savenote.1', when: cloud,              // botón Guardar (18-10-2026)
-      title: ['Importante: guarda tu partida', 'Important: save your game'],
-      body: ['<p>Debido a problemas con el guardado, a partir de ahora la partida se guarda en la nube automáticamente <b>cada 10 minutos</b>.</p>' +
-             '<p>Hemos incorporado un botón <b class="gold">Guardar</b> arriba a la derecha. Úsalo antes de cerrar el juego o de cambiar de aparato: <b>es muy importante para no perder tu partida</b>.</p>',
-             '<p>Because of problems with saving, from now on your game is saved to the cloud automatically <b>every 10 minutes</b>.</p>' +
-             '<p>We have added a <b class="gold">Save</b> button at the top right. Use it before closing the game or switching devices: <b>it is very important so you don’t lose your progress</b>.</p>'] },
+      title: ['重要：請記得儲存進度', '重要：請記得儲存進度'],
+      body: ['<p>因為先前發生過存檔問題，現在遊戲會自動把進度存到雲端，<b>每 30 分鐘</b>一次。</p>' +
+             '<p>右上角新增了 <b class="gold">儲存</b> 按鈕。關閉遊戲或換裝置前請先按一下：<b>這對避免進度遺失非常重要</b>。</p>',
+             '<p>因為先前發生過存檔問題，現在遊戲會自動把進度存到雲端，<b>每 30 分鐘</b>一次。</p>' +
+             '<p>右上角新增了 <b class="gold">儲存</b> 按鈕。關閉遊戲或換裝置前請先按一下：<b>這對避免進度遺失非常重要</b>。</p>'] },
     { key: 'ps.ranknote.1', when: () => cloud() && ((G.DB.save.stats || {}).runs || 0) > 0,   // rankings desde cero (18-10-2026)
-      title: ['Los rankings se han reiniciado', 'The leaderboards have been reset'],
-      body: ['<p>Hemos ajustado la <b>Sentencia de Arceus</b>: huir corriendo con toda la velocidad subida y el veneno ya no sirven para aguantar para siempre.</p>' +
-             '<p>Para que todos compitáis en igualdad, <b>todos los rankings empiezan de cero</b> (hoy, semana, mes, año e histórico). ¡A por el primer puesto!</p>',
-             '<p>We have adjusted the <b>Judgment of Arceus</b>: running away with maxed-out speed and poison no longer let you last forever.</p>' +
-             '<p>So everyone competes on equal terms, <b>all leaderboards start from scratch</b> (daily, weekly, monthly, yearly and all-time). Go for first place!</p>'] }
+      title: ['排行榜已重新開始', '排行榜已重新開始'],
+      body: ['<p>我們調整了 <b>阿爾宙斯的審判</b>：靠速度逃跑和中毒已經無法一直撐下去。</p>' +
+             '<p>為了讓大家在相同條件下競爭，<b>所有排行榜都從零開始</b>（今日、本週、本月、今年與歷史）。快去搶第一名吧！</p>',
+             '<p>我們調整了 <b>阿爾宙斯的審判</b>：靠速度逃跑和中毒已經無法一直撐下去。</p>' +
+             '<p>為了讓大家在相同條件下競爭，<b>所有排行榜都從零開始</b>（今日、本週、本月、今年與歷史）。快去搶第一名吧！</p>'] }
   ];
   /** → true si se ha enseñado alguno. */
   function updateNotices() {
@@ -94,7 +94,7 @@ G.LoginUI = (() => {
       try { localStorage.setItem(n.key, '1'); } catch (e) { /* nada */ }
       $('savenote-title').textContent = n.title[en];
       $('savenote-body').innerHTML = n.body[en];
-      $('savenote-ok').textContent = en ? 'Got it' : 'Entendido';
+      $('savenote-ok').textContent = '知道了';
     };
     $('savenote-ok').onclick = next;
     next();

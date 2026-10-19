@@ -107,6 +107,13 @@
     }
   }
   const DICT = {
+  // 2026-10-19 上游新增介面
+  "Guardar": "儲存",
+  "Accesibilidad": "無障礙",
+  "Entendido": "知道了",
+  "Importante: guarda tu partida": "重要：請記得儲存進度",
+  "Los rankings se han reiniciado": "排行榜已重新開始",
+  "Guardar la partida en la nube": "將進度儲存到雲端",
   "Acero": "鋼",
   "Agua": "水",
   "Bicho": "蟲",

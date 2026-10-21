@@ -72,9 +72,9 @@ G.LoginUI = (() => {
   const NOTES = [
     { key: 'ps.savenote.1', when: cloud,              // botón Guardar (18-10-2026)
       title: ['重要：請記得儲存進度', '重要：請記得儲存進度'],
-      body: ['<p>因為先前發生過存檔問題，現在遊戲會自動把進度存到雲端，<b>每 30 分鐘</b>一次。</p>' +
+      body: ['<p>因為先前發生過存檔問題，進度現在會先存在這台裝置的瀏覽器，<b>再定期上傳到雲端</b>；關閉分頁時也會上傳。</p>' +
              '<p>右上角新增了 <b class="gold">儲存</b> 按鈕。關閉遊戲或換裝置前請先按一下：<b>這對避免進度遺失非常重要</b>。</p>',
-             '<p>因為先前發生過存檔問題，現在遊戲會自動把進度存到雲端，<b>每 30 分鐘</b>一次。</p>' +
+             '<p>因為先前發生過存檔問題，進度現在會先存在這台裝置的瀏覽器，<b>再定期上傳到雲端</b>；關閉分頁時也會上傳。</p>' +
              '<p>右上角新增了 <b class="gold">儲存</b> 按鈕。關閉遊戲或換裝置前請先按一下：<b>這對避免進度遺失非常重要</b>。</p>'] },
     { key: 'ps.ranknote.1', when: () => cloud() && ((G.DB.save.stats || {}).runs || 0) > 0,   // rankings desde cero (18-10-2026)
       title: ['排行榜已重新開始', '排行榜已重新開始'],
@@ -93,8 +93,12 @@ G.LoginUI = (() => {
       if (!n) { $('scr-savenote').classList.add('hidden'); return; }
       try { localStorage.setItem(n.key, '1'); } catch (e) { /* nada */ }
       $('savenote-title').textContent = n.title[en];
-      $('savenote-body').innerHTML = n.body[en];
-      $('savenote-ok').textContent = '知道了';
+      // Otros idiomas: el aviso entero va traducido en su diccionario (por trozos sale raro); si falta, en inglés.
+      const other = G.I18n.lang !== 'es' && !en, body = $('savenote-body');
+      if (other) body.setAttribute('translate', 'no');
+      body.innerHTML = !other ? n.body[en] : G.I18n.has(n.body[0]) ? G.T(n.body[0]) : n.body[1];
+      // 繁中私人副本：字典沒有「Entendido」，這裡直接給中文。
+      $('savenote-ok').textContent = G.I18n.lang === 'zh-Hant' ? '知道了' : (en ? 'Got it' : 'Entendido');
     };
     $('savenote-ok').onclick = next;
     next();

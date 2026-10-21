@@ -98,8 +98,11 @@ G.Player = class Player {
    */
   atkFor(m) {
     const cat = m && m.cat, b = cat === 'physical' ? this.buffs.patk : cat === 'special' ? this.buffs.satk : null;
-    return this.atk * G.Stats.fit(this.mon, cat) * (b ? 1 + b.n * b.amount : 1);
+    return this.atk * G.Stats.fit(this.mon, cat) * (b ? 1 + b.n * b.amount : 1) * (m && this.monoType(m.type) ? Player.MONO_K : 1);
   }
+  /** Monotipo (19-10-2026): los de un solo tipo pegan un +20 % con los ataques de su tipo (tienen menos variedad). */
+  static get MONO_K() { return 1.2; }
+  monoType(type) { return this.mon.types.length === 1 && type === this.mon.types[0]; }
   get spd() {
     const s = this.baseSpd * this.spdMul * (1 + this.buffs.spd.n * this.buffs.spd.amount) * (this.slowT > 0 ? 0.5 : 1);
     const w = G.Weather.speedFor(this.mon.types);
@@ -118,8 +121,9 @@ G.Player = class Player {
     const group = [m];
     this.slots.push(group);
     this.arrange();
-    // Se cambia al nuevo, salvo si estás usando un vínculo (no te quita el grupo).
-    if (!(this.slots[this.active] && this.slots[this.active].length > 1)) this.setActive(this.slots.indexOf(group));
+    // Te quedas con el que llevabas (18-10-2026: antes se cambiaba solo al nuevo
+    // y te quitaba el ataque que estabas usando). Sólo si no tenías ninguno, el nuevo.
+    if (!this.slots[this.active]) this.active = this.slots.indexOf(group);
     return true;
   }
 
@@ -287,9 +291,11 @@ G.Player = class Player {
 
   /** Devuelve cuántos niveles ha subido (pueden ser varios de golpe). */
   gainXp(amount) {
-    this.xp += amount * this.xpMul;
+    const add = amount * this.xpMul;
+    if (!Number.isFinite(add) || add <= 0) return 0;     // una experiencia infinita no acababa nunca de subir niveles
+    this.xp += add;
     let leveled = 0;
-    while (this.xp >= this.xpNext) {
+    while (this.xp >= this.xpNext && leveled < 50) {
       this.xp -= this.xpNext;
       this.level++;
       this.xpNext = Player.xpFor(this.level);
@@ -416,7 +422,8 @@ G.Player = class Player {
    * se ha movido después (en PC). Soltar el stick sin tocar el ratón = solo.
    */
   handAim() {
-    if (this.remote || !G.Settings.get('aimManual')) return null;
+    // En el móvil (táctil) no hay apuntado a mano: siempre apunta solo.
+    if (this.remote || G.Settings.touch || !G.Settings.get('aimManual')) return null;
     const st = G.Pad.aim();
     if (st) return Math.atan2(st[1], st[0]);
     if (G.Touch.active || !G.Input.mouseMovedAt || G.Input.mouseMovedAt < G.Pad.aimAt) return null;
@@ -545,9 +552,9 @@ G.Player = class Player {
       ctx.textAlign = 'center';
       const y = this.y - this.bodyH - 8;
       ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(0,0,0,.75)';
-      ctx.strokeText(this.tag, this.x, y);
+      G.I18n.rawCanvas(ctx, 'strokeText', this.tag, this.x, y);
       ctx.fillStyle = this.dead ? '#ff8a96' : this.tagColor || '#fff';
-      ctx.fillText(this.tag, this.x, y);
+      G.I18n.rawCanvas(ctx, 'fillText', this.tag, this.x, y);
       if (this.dead) {
         ctx.font = '700 6px Pixelify,"Segoe UI",sans-serif';
         ctx.strokeText(this.revLabel || '', this.x, y - 8);

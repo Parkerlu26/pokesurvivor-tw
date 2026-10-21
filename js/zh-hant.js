@@ -3928,14 +3928,14 @@
     if (box && !box.querySelector('#pszh-status')) {
       const p = document.createElement('p');
       p.id = 'pszh-status'; p.className = 'pszh-note'; p.dataset.pszhControl = '';
-      p.textContent = `繁體中文補丁 v${VERSION} 已啟用（私人自架副本）。新文字可能暫時保留原文。`;
+      p.textContent = `繁體中文已啟用（遊戲內建 zh-Hant，補丁 v${VERSION} 作為備援）· 私人自架副本`;
       box.prepend(p);
     }
     const login = document.querySelector('#login-mode');
     if (login && !document.querySelector('#pszh-login')) {
       const p = document.createElement('p');
       p.id = 'pszh-login'; p.className = 'pszh-note center'; p.dataset.pszhControl = '';
-      p.textContent = '繁體中文補丁已啟用 · 私人自架副本';
+      p.textContent = '繁體中文已啟用 · 私人自架副本';
       login.after(p);
     }
   }

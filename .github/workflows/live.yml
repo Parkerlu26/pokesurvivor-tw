@@ -1,13 +1,9 @@
-# ¿Está el canal de YouTube en directo? Cada 5 min (GitHub lo retrasa a veces
-# unos minutos) mira la página /live del canal y deja live.json en la rama
-# «live»: { live, id, at }. El juego la lee (js/ui/live-ui.js) sin Firebase.
-# Sólo se sube algo al cambiar o, en directo, cada 30 min (para que «at» no
-# caduque). Gratis: el repositorio es público.
+# 保留上游 YouTube 直播發布程式，但私人副本只讀上游 live.json，不自行發布。
 name: live
 
+# 私人副本不發布作者的 YouTube 狀態：LiveUI 已直接讀上游 live.json。
+# 不要在 fork 加回 schedule；fork 沒有 live 分支，checkout 會反覆失敗寄信。
 on:
-  schedule:
-    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -19,6 +15,7 @@ concurrency:
 
 jobs:
   check:
+    if: github.repository == 'JPTER78/pokesurvivor'
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:

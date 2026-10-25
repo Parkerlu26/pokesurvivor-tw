@@ -104,15 +104,16 @@ test('mixed formats arrive unchanged; capabilities and corrupt packets never rea
   assert.deepEqual(got, [['a', frame()], ['a', client()]]);
   assert.equal(N.stats.binaryRecv, 1); assert.equal(N.stats.invalidBinary, 3);
 });
-test('byte counters count successful payloads; failed frames never enable database relay', () => {
+test('private fork: failed data-channel frames use database relay without inflating byte counters', () => {
   const { N, pcs, cap, relay } = network(), dc = pcs[0].dc, f = frame(); cap(dc);
   N.send('a', f);
   assert.equal(N.stats.sentBytes, C.encode(f).byteLength);
   assert.equal(N.stats.jsonBytes, Buffer.byteLength(JSON.stringify(f)));
   assert.equal(N.stats.binarySent, 1);
   const before = N.stats.sentBytes; dc.fail = true; N.send('a', f);
-  assert.equal(N.stats.sentBytes, before); assert.equal(relay.length, 0);
-  N.send('a', { k: 'start', seed: 1 }); assert.equal(relay.length, 1);
+  assert.equal(N.stats.sentBytes, before); assert.equal(relay.length, 1);
+  assert.deepEqual(JSON.parse(relay[0][1]).d, f);
+  N.send('a', { k: 'start', seed: 1 }); assert.equal(relay.length, 2);
 });
 test('reconnect resets capability, so a replaced/old peer never receives binary', () => {
   const { N, pcs, cap } = network(); cap(pcs[0].dc);
@@ -178,62 +179,60 @@ const goodTurn = () => turnReply({ expiresAt: Date.now() / 1000 + 7200, iceServe
   { urls: ['turn:turn.pokesurvivor.com:3478?transport=udp', 'turn:evil.example:3478', 'stun:x'], username: 'u', credential: 'c' },
   { urls: ['turn:turn.pokesurvivor.com:3478?transport=tcp'], username: '', credential: 'c' }] });
 
-test('own TURN: first try is direct only; a failed pair retries at once with clean TURN servers', async () => {
-  const { N, pcs, calls, signals } = turnNetwork(goodTurn);
+test('private fork: failed direct connections use relay without requesting upstream TURN tokens', async () => {
+  const { N, pcs, calls, signals } = turnNetwork(() => assert.fail('must not contact upstream TURN'));
   N.open('room', true, 'host'); N.syncMembers(['host', 'a', 'b']); await settle();
-  assert.equal(calls.length, 0, 'nothing is asked while direct may work');
   assert.equal(pcs.length, 2);
-  for (const pc of pcs) assert.equal(pc.cfg.iceServers.length, 1);
+  assert.ok(pcs.every(pc => pc.cfg.iceServers.length === 1));
   assert.ok(signals.every(([, m]) => !m.sig.sdp || !m.sig.t));
   pcs[0].fail(); await settle();
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0][0], 'https://ice.pokesurvivor.com/v1/ice');
-  assert.equal(calls[0][1].method, 'POST'); assert.equal(calls[0][1].headers.Authorization, 'Bearer token');
-  const retry = pcs[2];
-  assert.equal(retry.cfg.iceServers[0].urls[0], 'stun:stun.l.google.com:19302');
-  assert.deepEqual(retry.cfg.iceServers.slice(1), [{ urls: ['turn:turn.pokesurvivor.com:3478?transport=udp'], username: 'u', credential: 'c' }]);
-  const offers = signals.filter(([p, m]) => p.endsWith('/a') && m.sig.sdp);
-  assert.equal(offers.at(-1)[1].sig.t, 1);
-  assert.equal(pcs.length, 3, 'only the failed pair reserves TURN');
+  assert.equal(N.mode('a'), 'relay');
+  assert.equal(N.mode('b'), 'connecting');
+  assert.equal(calls.length, 0);
+  assert.equal(pcs.length, 2, 'no extra connection or paid TURN allocation');
 });
-test('own TURN: refused or broken answers retry with STUN only and then wait as before', async () => {
-  for (const respond of [() => turnReply({ error: 'user_denied' }, 403), () => { throw Error('offline'); },
-    () => turnReply({ expiresAt: 1, iceServers: [] })]) {
-    const { N, pcs, calls, timers } = turnNetwork(respond);
+
+test('private fork: relay does not depend on a successful TURN endpoint response', async () => {
+  for (const respond of [() => turnReply({ error: 'user_denied' }, 403),
+    () => { throw Error('offline'); }, () => turnReply({ expiresAt: 1, iceServers: [] })]) {
+    const { N, pcs, calls } = turnNetwork(respond);
     N.open('room', true, 'host'); N.syncMembers(['host', 'a']); await settle();
     pcs[0].fail(); await settle();
-    assert.equal(calls.length, 1); assert.equal(pcs.length, 2); assert.equal(pcs[1].cfg.iceServers.length, 1);
-    pcs[1].fail(); await settle();
-    assert.equal(timers.at(-1), 15000); assert.equal(pcs.length, 2); assert.equal(calls.length, 1);
+    assert.equal(calls.length, 0); assert.equal(pcs.length, 1);
+    assert.equal(N.mode('a'), 'relay');
   }
 });
-test('own TURN: guests use it only when the host asks for it', async () => {
-  const { N, pcs, calls, offer } = turnNetwork(goodTurn, { user: { uid: 'guest', getIdToken: async () => 'token' }, host: false });
+
+test('private fork: a guest ignores upstream TURN offers and keeps STUN only', async () => {
+  const { N, pcs, calls, offer } = turnNetwork(() => assert.fail('no token sharing'),
+    { user: { uid: 'guest', getIdToken: async () => assert.fail('no upstream token') }, host: false });
   N.open('room', false, 'host');
   offer(false); await settle();
-  assert.equal(calls.length, 0); assert.equal(pcs[0].cfg.iceServers.length, 1);
+  assert.equal(pcs[0].cfg.iceServers.length, 1);
   offer(true); await settle();
-  assert.equal(calls.length, 1); assert.equal(pcs[1].cfg.iceServers.length, 2);
+  assert.equal(calls.length, 0); assert.equal(pcs[1].cfg.iceServers.length, 1);
+  pcs[1].fail(); await settle();
+  assert.equal(N.mode('host'), 'relay');
 });
-test('own TURN: players without an account never ask and keep the old retry', async () => {
+
+test('private fork: unavailable or anonymous TURN identities never trigger upstream calls', async () => {
   for (const user of [null, { uid: 'anon', isAnonymous: true }]) {
-    const { N, pcs, calls, timers } = turnNetwork(() => assert.fail('no request'), { user });
+    const { N, pcs, calls } = turnNetwork(() => assert.fail('no request'), { user });
     N.open('room', true, 'host'); N.syncMembers(['host', 'a']); await settle();
     pcs[0].fail(); await settle();
-    assert.equal(calls.length, 0); assert.equal(pcs.length, 1); assert.equal(timers.at(-1), 15000);
+    assert.equal(calls.length, 0); assert.equal(pcs.length, 1);
+    assert.equal(N.mode('a'), 'relay');
   }
 });
-test('own TURN: a pair that needed it starts with it next time, and after 2 such guests everyone does', async () => {
-  const { N, pcs } = turnNetwork(goodTurn);
-  N.open('room', true, 'host'); N.syncMembers(['host', 'a']); await settle();
-  pcs[0].fail(); await settle();
-  N.close(); N.open('room2', true, 'host'); N.syncMembers(['host', 'a', 'b']); await settle();
-  const [a2, b1] = pcs.slice(-2);
-  assert.equal(a2.cfg.iceServers.length, 2, 'a remembered for the whole session');
-  assert.equal(b1.cfg.iceServers.length, 1, 'b still tries direct first');
-  b1.fail(); await settle();
-  N.syncMembers(['host', 'a', 'b', 'c']); await settle();
-  assert.equal(pcs.at(-1).cfg.iceServers.length, 2, 'two failures: own network needs TURN');
+
+test('private fork: reconnecting rooms never enables upstream TURN after relay failures', async () => {
+  const { N, pcs, calls } = turnNetwork(() => assert.fail('no request'));
+  N.open('room', true, 'host'); N.syncMembers(['host', 'a', 'b']); await settle();
+  pcs[0].fail(); pcs[1].fail(); await settle();
+  assert.equal(N.mode('a'), 'relay'); assert.equal(N.mode('b'), 'relay');
+  N.close(); N.open('room2', true, 'host'); N.syncMembers(['host', 'a', 'b', 'c']); await settle();
+  assert.ok(pcs.slice(-3).every(pc => pc.cfg.iceServers.length === 1));
+  assert.equal(calls.length, 0);
 });
 
 function coopWithCuts(host) {

@@ -8,6 +8,8 @@
 (() => {
   const languages = ['fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'];
   const rows = [
+    ["Aviso de guardado del servidor privado","Avis de sauvegarde du serveur privé","Avviso di salvataggio del server privato","Aviso de salvamento do servidor privado","私人服务器存档提示","私人伺服器存檔提示"],
+    ["El aviso del servidor privado ya no promete subidas periódicas ni al cerrar la pestaña. Pulsa Guardar antes de cerrar el juego o cambiar de dispositivo y espera a que termine.","L’avis du serveur privé ne promet plus d’envois périodiques ni à la fermeture de l’onglet. Appuie sur Enregistrer avant de fermer le jeu ou de changer d’appareil et attends la fin.","L’avviso del server privato non promette più caricamenti periodici o alla chiusura della scheda. Premi Salva prima di chiudere il gioco o cambiare dispositivo e attendi il completamento.","O aviso do servidor privado não promete mais envios periódicos nem ao fechar a aba. Pressione Salvar antes de fechar o jogo ou trocar de dispositivo e espere terminar.","私人服务器提示不再承诺定时上传或关闭标签页时上传。关闭游戏或更换设备前，请按保存并等待完成。","私人伺服器提示不再承諾定時上傳或關閉分頁時上傳。關閉遊戲或更換裝置前，請按儲存並等待完成。"],
     ["Tipo", "Type", "Tipo", "Tipo", "属性", "屬性"],
     ["Nuevo", "Nouveau", "Novità", "Novidades", "新增", "新增"],
     ["Cambios", "Modifications", "Modifiche", "Alterações", "变更", "變更"],

@@ -64,18 +64,21 @@ for (const [i, lang] of langs.entries()) {
     b.ctx.document.createElement = () => ({});
     b.load('js/ui/login.js');
     assert.equal(b.G.LoginUI.updateNotices(), true);
-    // El aviso del dueño, entero y con sus negritas: "cada 10 minutos" en todos los idiomas.
+    // 私人繁中副本：提示內容必須符合實際手動存檔，不承諾定時或關閉分頁上傳。
     const body = node('savenote-body');
-    assert.ok(body.innerHTML.includes('10') && !body.innerHTML.includes('30'));
+    assert.ok(body.innerHTML.includes('手動按右上角的儲存按鈕'));
+    assert.ok(body.innerHTML.includes('沒有定時上傳，關閉分頁也不會自動上傳'));
+    assert.ok(!body.innerHTML.includes('關閉分頁時也會上傳'));
+    assert.ok(!body.innerHTML.includes('定期上傳'));
+    assert.equal(b.storage['ps.savenote.tw.manual.20261025'], '1');
     assert.equal((body.innerHTML.match(/<b[ >]/g) || []).length, 3);
     if (lang !== 'es') assert.ok(!body.innerHTML.includes('Debido a problemas'));
     if (lang !== 'es' && lang !== 'en') assert.ok(!body.innerHTML.includes('Because of problems') && body.attrs.translate === 'no');
-    if (lang === 'es' || lang === 'en') assert.equal(node('savenote-title').textContent, lang === 'es' ? 'Importante: guarda tu partida' : 'Important: save your game');
-    else assert.equal(node('savenote-title').textContent, 'Importante: guarda tu partida');
+    assert.equal(node('savenote-title').textContent, '重要：請記得儲存進度');
     assert.equal(b.G.LoginUI.updateNotices(), false);
     b.G.DB.save.stats.runs = 1;
     assert.equal(b.G.LoginUI.updateNotices(), true);
-    assert.ok(/rankings|leaderboards/.test(b.G.T(node('savenote-title').textContent)) || lang.startsWith('zh') || lang === 'fr' || lang === 'it');
+    assert.equal(node('savenote-title').textContent, '排行榜已重新開始');
     assert.equal((node('savenote-body').innerHTML.match(/<p>/g) || []).length, 2);
     assert.equal(b.G.LoginUI.updateNotices(), false);
   });

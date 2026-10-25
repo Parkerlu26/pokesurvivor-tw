@@ -6,6 +6,10 @@
  * Cada línea en español y en inglés.
  */
 G.CHANGELOG = [
+  { d: '2026-10-25', title: ['Aviso de guardado del servidor privado', 'Private-server save notice'], fix: [
+    ['El aviso del servidor privado ya no promete subidas periódicas ni al cerrar la pestaña. Pulsa Guardar antes de cerrar el juego o cambiar de dispositivo y espera a que termine.',
+     'The private-server notice no longer promises periodic uploads or uploads when closing the tab. Press Save before closing the game or switching devices and wait for it to finish.']
+  ] },
   { d: '2026-10-23', title: ['Ranking de daño a Arceus y Tablas', 'Arceus damage ranking and Plates'], new: [
     ["Botón de YouTube arriba, junto a Novedades: lleva al canal del juego y, cuando hay directo, se pone rojo con «EN DIRECTO» y te lleva a verlo.",
      "YouTube button at the top, next to What's new: it takes you to the game's channel and, when there is a live stream, it turns red with \"LIVE\" and takes you to watch it."],

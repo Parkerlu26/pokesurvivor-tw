@@ -77,3 +77,14 @@ test('client admin UIDs match the Firestore moderation rule', () => {
   const parse = text => JSON.parse(text.replace(/'/g, '"')).sort();
   assert.deepEqual(parse(client), parse(rule));
 });
+
+test('mobile gacha panels can shrink inside the responsive grid', () => {
+  assert.match(read('css/style.css'), /#scr-gacha\s+\.split\s*>\s*\*\s*\{\s*min-width:\s*0\s*;/,
+    'Grid children need min-width:0 so all gacha text and pull buttons fit on mobile');
+});
+
+test('privacy notice does not promise persistent progress for guest sessions', () => {
+  const privacy = read('privacidad/index.html');
+  assert.ok(privacy.includes('訪客進度只在本次遊玩期間保留'));
+  assert.ok(!privacy.includes('進度與偏好保存在你使用的瀏覽器'));
+});

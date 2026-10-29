@@ -113,6 +113,8 @@ G.LoginUI = (() => {
       ? 'Abierto desde un archivo: la partida sólo se guarda en este navegador. Para guardar en la nube, juega en la versión publicada.'
       : G.DB.localReason === 'host'
         ? '此副本未連上雲端：進度只會存在這個瀏覽器。'
+      : G.DB.localReason === 'dev'
+        ? '測試頁面：進度只會存在這個瀏覽器。請開啟此副本的首頁以使用雲端存檔。'
       : G.DB.localReason === 'config'
         ? 'Nube sin configurar: la partida sólo se guarda en este navegador.'
         : 'No se pudo conectar con la nube: la partida sólo se guarda en este navegador.';

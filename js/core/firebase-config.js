@@ -23,3 +23,6 @@ G.FIREBASE_CONFIG = {
   appId: '1:1234567890:web:abc123'
 };
 */
+
+// Optional private ranking seal API; never fall back to the upstream token service.
+G.RANKING_SEAL_API = window.PS_RANKING_SEAL_API || null;

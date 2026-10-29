@@ -19,6 +19,18 @@
 4. **網域相關**：移除 `CNAME`、把 canonical／分享連結改指這個網站、移除作者的贊助入口。
 5. 以 `node tools/build.js --expose` 建置（不混淆、保留 `G`），方便除錯。
 
+## 本機專案位置
+
+本專案已移至：`C:\Users\nicwe\antigravity\poke`。
+
+```powershell
+Set-Location -LiteralPath 'C:\Users\nicwe\antigravity\poke'
+node tools/serve.cjs 8081
+```
+
+Git 倉庫與遠端設定保留不變。補丁、驗證副本與部署紀錄收在 `.local-delivery`，不會納入 Git。
+詳見 [本機工作區說明](docs/WORKSPACE.md)。
+
 ## 部署檢查與本機預覽
 
 2026-10-25 的問題、已修正項目與上線步驟見 [檢查報告](docs/DIAGNOSTICS-2026-10-25.md)。
@@ -62,6 +74,24 @@ node tools/build.js --expose
 
 目前雲端存檔是手動操作：關閉遊戲或換裝置前按右上角「儲存」，並等到儲存完成。
 沒有定時上傳，關閉分頁也不會自動上傳。
+
+## 本次同步：2026-10-30
+
+- 原版公開分支：`110550a80f81eadd6924b6286807935a479e9b4f`（2026-10-29）。
+- 最新完整公開客戶端原始碼：`d667c216`（2026-10-28）；同步萬聖節（10/30–11/2，西班牙時間）、存檔合併、合作慢速連線與手機操作修正。
+- 10/29 原版移除了開發原始碼、工具與伺服器規則，故保留最新可取得的原始碼，另外接上最新公開的隱私政策、直播檢查程式與影片通知（從公開成品恢復對應模組，並補回歸測試）。不是直接刪除本副本的開發／部署檔案。
+- 原版新增的排行榜 seal 服務不適用私人 Firebase。`window.PS_RANKING_SEAL_API = null` 預設不呼叫官方伺服器，成績沿用本副本的規則；只有架設自己的驗證服務與對應規則後才設定此欄位。
+- 更新的合作房間規則使用 `rin` 入場標記與分塊中繼。上線時需要部署 `database.rules.json` 和 `firestore.rules`，否則舊規則可能阻擋入場。
+- 同步前檔案、合併來源與測試紀錄在 `.local-delivery/upstream-update-20261030/`。本機更新不會自動推送 GitHub 或部署 Firebase。
+
+```powershell
+node tools/build.js --expose
+node tools/export_data.js
+python tools/make_seo_pages.py
+node --test --test-isolation=none tests/*.test.cjs
+# 經確認後才部署，不會更改任何玩家存檔內容：
+firebase deploy --only firestore:rules,firestore:indexes,database --project pokesurvivor-tw-6b55e
+```
 
 ## 更新上游
 

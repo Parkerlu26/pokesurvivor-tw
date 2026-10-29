@@ -23,3 +23,7 @@ window.PS_FIREBASE_CONFIG = {
   databaseURL: 'https://你的專案-default-rtdb.asia-southeast1.firebasedatabase.app'
 };
 */
+
+/* 私人排行榜沿用此副本的 Firestore 規則，不向原版伺服器傳送登入 token。
+ * 只有架好自己的簽章服務並部署對應驗證規則後，才填入自己的 HTTPS API。 */
+window.PS_RANKING_SEAL_API = null;

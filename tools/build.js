@@ -56,7 +56,12 @@ if (!EXPOSE) {
 }
 const min = fs.readFileSync(outJs);
 // La huella cuenta también el CSS: un cambio sólo de estilos es versión nueva (version.json).
-const hash = crypto.createHash('sha1').update(min).update(fs.readFileSync(path.join(ROOT, 'css', 'style.css'))).digest('hex').slice(0, 10);
+// Publish the same CSS bytes on Windows and after Git checkout in GitHub Pages.
+const cssFile = path.join(ROOT, 'css', 'style.css');
+const rawCss = fs.readFileSync(cssFile, 'utf8');
+const cssBytes = Buffer.from(rawCss.replace(/\r\n/g, '\n'));
+if (!cssBytes.equals(Buffer.from(rawCss))) fs.writeFileSync(cssFile, cssBytes);
+const hash = crypto.createHash('sha1').update(min).update(cssBytes).digest('hex').slice(0, 10);
 
 // Diccionarios de francés, italiano, portugués y chino (js/lang/), uno por idioma: los pide
 // locales.js con su misma huella ?v=, para que al cambiar no se queden en caché.
@@ -73,7 +78,7 @@ html = html.replace(LOC, `<script src="js/core/locales.js?v=${locHash.digest('he
 // con el style.css viejo que tiene guardado.
 const CSS = '<link rel="stylesheet" href="css/style.css">';
 if (!dev.includes(CSS)) throw new Error('dev.html no carga ' + CSS + ' como se esperaba: revisa build.js');
-const cssHash = crypto.createHash('sha1').update(fs.readFileSync(path.join(ROOT, 'css', 'style.css'))).digest('hex').slice(0, 10);
+const cssHash = crypto.createHash('sha1').update(cssBytes).digest('hex').slice(0, 10);
 html = html.replace(CSS, `<link rel="stylesheet" href="css/style.css?v=${cssHash}">`);
 html = html.replace(/<meta name="robots" content="noindex">\s*/, '');
 // --sin-seo: sin canonical/redes/datos estructurados ni enlaces a las páginas

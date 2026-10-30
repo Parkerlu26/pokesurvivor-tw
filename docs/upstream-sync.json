@@ -7,7 +7,7 @@
   "recoveredPublicModules": [
     "js/ui/video-ui.js"
   ],
-  "privateVersion": "60f3002752",
+  "privateVersion": "151f8bed60",
   "sourceRemovalPolicy": "Preserve the private fork sources, tools and deployment rules when upstream stops publishing them.",
   "credentialPolicy": "No official TURN or ranking seal requests; ranking seal service must be explicitly configured by the private server owner."
 }

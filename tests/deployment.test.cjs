@@ -88,3 +88,12 @@ test('privacy notice does not promise persistent progress for guest sessions', (
   assert.ok(privacy.includes('訪客進度只在本次遊玩期間保留'));
   assert.ok(!privacy.includes('進度與偏好保存在你使用的瀏覽器'));
 });
+
+test('published fingerprints survive Git LF normalization on Windows', () => {
+  const bundle = read('js/app.min.js').replace(/\r\n/g, '\n');
+  const css = read('css/style.css').replace(/\r\n/g, '\n');
+  const digest = crypto.createHash('sha1').update(bundle).update(css).digest('hex').slice(0, 10);
+  assert.equal(JSON.parse(read('version.json')).v, digest, 'Git normalization must not change the published version');
+  const cssDigest = crypto.createHash('sha1').update(css).digest('hex').slice(0, 10);
+  assert.ok(read('index.html').includes('css/style.css?v=' + cssDigest));
+});
